@@ -1,3 +1,7 @@
+--- NOTA ---
+
+ip route RedDestino SubnetMask PuertoAConectar
+
 ----Rectoría -----
 ena
 config t
