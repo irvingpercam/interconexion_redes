@@ -112,17 +112,18 @@ hostname RouterRectoria
 service password-enc
 no ip domain lookup
 
-enable secret class
+enable secret cisco
 
 line con 0
 password cisco
 login
 logging sync
 
-line vty 0 4
+line vty 0 2
 password cisco
 login
 logging sync
+banner motd #¡Solo personal autorizado!#
 
 int s0/0/1
 description Interfaz a RF
@@ -154,17 +155,19 @@ hostname RF
 service password-enc
 no ip domain lookup
 
-enable secret class
+enable secret cisco
 
 line con 0
 password cisco
 login
 logging sync
 
-line vty 0 4
+line vty 0 2
 password cisco
 login
 logging sync
+
+banner motd #¡Solo personal autorizado!#
 
 int s0/0/0
 desc Interfaz DCE 
