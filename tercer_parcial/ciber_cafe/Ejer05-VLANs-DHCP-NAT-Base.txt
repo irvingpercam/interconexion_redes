@@ -1,0 +1,139 @@
+! =====================
+! ======== ISP ========
+! =====================
+
+  Ya configurado
+
+! ===========================
+! ======== RFrontera ========
+! ===========================
+
+ena
+config t
+hostname RFrontera
+no ip domain-lookup
+
+int s0/0/0
+ip address 65.255.255.253 255.255.255.252
+ip nat outside
+no shut
+
+! Declaraci�n de subinterfaces.
+! Manager
+int g0/0.10
+encapsulation dot1Q 10
+ip address 192.168.0.142 255.255.255.240
+ip nat inside
+
+! Users
+int g0/0.20
+encapsulation dot1Q 20
+ip address 192.168.0.126 255.255.255.128
+ip nat inside
+
+! Services
+int g0/0.30
+encapsulation dot1Q 30
+ip address 192.168.0.142 255.255.255.240
+ip nat inside
+
+int g0/0
+no shut
+
+! NAT est�tico.
+ip nat inside source static 192.168.0.145 65.100.255.134
+ip nat inside source static 192.168.0.130 65.100.255.135
+
+
+! Definici�n del pool para NAT din�mico
+ip nat pool PoolCyber 65.100.255.128 65.100.255.133 netmask 255.255.255.248
+
+! Definir qui�n puede acceder al NAT din�mico
+access-list 65 permit 192.168.0.0 0.0.0.255
+
+! Declarar el PAT din�mico
+ip nat inside source list 65 pool PoolCyber overload
+
+ip route 0.0.0.0 0.0.0.0 s0/0/0
+
+
+! DHCP Exceptions
+ip dhcp excluded-address 192.168.0.126
+
+! DHCP Pool
+ip dhcp pool USERs
+network 192.168.0.0 255.255.255.128
+default-router 192.168.0.126
+
+
+! ====================
+! ===== SCompany ======
+! ====================
+
+ena
+conf t
+hostname SCompany
+
+! Creaci�n de la base de datos de las VLANs
+vlan 10
+name Manager
+
+vlan 20
+name Users
+
+vlan 30
+name Services
+
+! Definici�n de puerto trunk con Router.
+int g0/1
+switchport mode trunk
+no shut
+
+! Definici�n de puerto trunk con SUsers.
+int f0/10
+switchport mode trunk
+no shut
+
+! Definici�n de los puertos de acceso y relaci�n a Manager
+int range f0/1-6
+switchport mode access
+switchport access vlan 10
+
+! Definici�n de los puertos de acceso y relaci�n a Users
+int range f0/7-9, f0/11-19
+switchport mode access
+switchport access vlan 20
+
+! Definici�n de los puertos de acceso y relaci�n a que VLAN
+int range f0/20-24
+switchport mode access
+switchport access vlan 30
+
+! ====================
+! ====== SUsers =======
+! ====================
+
+ena
+conf t
+hostname SUsers
+
+! Creaci�n de la base de datos de las VLANs
+
+vlan 10
+name Manager
+
+vlan 20
+name Users
+
+vlan 30
+name Services
+
+! Definici�n de puerto trunk con SUsers.
+int f0/10
+switchport mode trunk
+no shut
+
+! Users
+int range f0/1-9, f0/11-24
+switchport mode access
+switchport access vlan 20

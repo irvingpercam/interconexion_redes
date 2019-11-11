@@ -1,0 +1,113 @@
+===== SwitchInvitados ====
+
+ena
+conf t
+hostname SwitchInvitados
+
+enable secret class
+
+line con 0
+password cisco
+login
+logging sync
+
+line vty  0 15
+password cisco
+login
+logging sync
+
+banner motd #Unauthorized access prohibited!#
+service password-enc
+
+int vlan 1
+ip add 192.168.20.1 255.255.255.128
+no shut
+ip default-gateway 192.168.20.126
+
+
+==== MyRouter ====
+ena
+conf t
+hostname MyRouter
+
+enable secret class
+
+line con 0
+password cisco
+login
+logging sync
+
+line vty  0 4
+password cisco
+login
+logging sync
+
+banner motd #Unauthorized access prohibited!#
+service password-enc
+
+int g0/0
+ip add 192.168.20.126 255.255.255.128
+no shut 
+
+int g0/1
+ip add 192.168.20.142 255.255.255.240
+no shut 
+
+int s0/0/0
+ip add 132.254.89.241 255.255.255.252
+no shut
+
+ip route 0.0.0.0 0.0.0.0 s0/0/0
+
+===== SwitchResidentes ====
+
+ena
+conf t
+hostname SwitchResidentes
+
+enable secret class
+
+line con 0
+password cisco
+login
+logging sync
+
+line vty  0 15
+password cisco
+login
+logging sync
+
+banner motd #Unauthorized access prohibited!#
+service password-enc
+
+int vlan 1
+ip add 192.168.20.129 255.255.255.240
+no shut
+ip default-gateway 192.168.20.142
+
+
+==== ACLS ====
+
+g. Diseña e instala una lista de control de acceso que evite que los invitados a la fiesta
+tengan acceso al servidor 
+
+access-list 110 deny ip 192.168.20.0 0.0.0.127 host 192.168.20.130
+access-list 110 deny ip 192.168.20.0 0.0.0.127 host 192.168.20.131
+access-list 110 permit ip any any
+int g0/1
+ip access-group 110 out
+
+h.
+
+access-list 120 deny tcp 192.168.20.0 0.0.0.127 host 192.168.20.132 eq 80
+access-list 120 deny tcp 192.168.20.0 0.0.0.127 host 192.168.20.133 eq 80
+access-list 120 permit ip any any
+int g0/0
+ip access-group 120 in
+
+i.
+
+access-list 130 deny tcp host 192.168.20.79 any eq 80
+access-list 130 permit ip any any
+int s0/0/0
+ip access-group 130 out

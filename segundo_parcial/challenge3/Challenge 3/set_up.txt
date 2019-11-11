@@ -1,0 +1,105 @@
+! ===========================
+! ======== RFrontera ========
+! ===========================
+
+
+! Declaración de subinterfaces para G0/0.
+! VLAN Admin
+int g0/0.1
+encapsulation dot1Q 1
+ip address 191.168.200.254 255.255.255.252
+
+
+!ADMIN
+int g0/0.66
+encapsulation dot1Q 66
+ip address 191.168.200.150 255.255.255.248
+
+
+! CAJAS
+int g0/0.70
+encapsulation dot1Q 70
+ip address 191.168.200.142 255.255.255.240
+
+! CLIENTES
+int g0/0.80
+encapsulation dot1Q 80
+ip address 191.168.200.126 255.255.255.128
+
+int g0/0
+no shut
+
+!==================================================================================
+!==================================================================================
+!==================================================================================
+!==================================================================================
+!==================================================================================
+
+
+
+
+
+! ====================
+! ===== S01 ======
+! ====================
+
+ena
+conf t
+hostname SW-Taqueria
+
+enable secret class
+
+line con 0
+password cisco
+login
+logging sync
+
+line vty  0 4
+password cisco
+login
+logging sync
+
+! Creación de la base de datos de las VLANs
+vlan 66
+name ADMIN
+vlan 70
+name CAJAS
+vlan 80
+name CLIENTES
+
+
+! Definición de los puertos de acceso y relaci�n a que VLAN
+!ADMIN
+int range f0/1-2
+switchport mode access
+switchport access vlan 80
+
+!CAJAS
+int range f0/3-5
+switchport mode access
+switchport access vlan 70
+
+!CLIENTES
+int range f0/6-7
+switchport mode access
+switchport access vlan 66
+
+!VLAN Administrativa
+int f0/24
+switchport mode access
+switchport access vlan 1
+
+int range f0/9-23
+shut
+
+! Configuración de la VLAN administrativa y asignacin de IP a la VLAN
+int vlan 1
+ip address 191.168.200.254 255.255.255.252
+no shut
+
+! Definición de puertos trunk.
+int f0/8
+switchport mode trunk
+no shut
+
+ip default-gateway  191.168.200.124

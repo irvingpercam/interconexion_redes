@@ -1,0 +1,92 @@
+--- R-Central ---
+ena
+config t
+
+hostname R-Central
+
+service password-enc
+no ip domain lookup
+
+enable secret cisco
+
+line con 0
+password cisco
+login
+logging sync
+
+line vty 0 2
+password cisco
+login
+logging sync
+banner motd #Solo personal autorizado!#
+
+int s0/1/1
+description Interfaz a DCE
+ip add 192.200.101.66 255.255.255.252
+no shut
+
+int g0/0
+desc Interfaz a Server 3
+ip add 215.128.255.126 255.255.255.192
+no shut
+
+int g0/1
+desc Interfaz a ISP
+ip add 65.127.255.38 255.255.255.248
+no shut
+
+ip route 0.0.0.0 0.0.0.0 65.127.255.32
+router rip
+version 2
+passive-interface g0/0
+passive-interface s0/1/1
+net 192.200.101.64
+net 215.128.255.64
+default-information originate
+redistribute static
+
+--- RUNO ---
+ena
+config t
+
+hostname RUNO
+
+service password-enc
+no ip domain lookup
+
+enable secret cisco
+
+line con 0
+password cisco
+login
+logging sync
+
+line vty 0 2
+password cisco
+login
+logging sync
+banner motd #Solo personal autorizado!#
+
+int s0/1/1
+description Interfaz DCE
+ip add 192.200.101.65 255.255.255.252
+no shut
+
+int g0/0
+desc Interfaz a Red Morada
+ip add 172.127.48.254 255.255.255.0
+no shut
+
+int g0/1
+desc Interfaz a Red Rosa
+ip add 221.255.16.126 255.255.255.128
+no shut
+
+router rip
+version 2
+passive-interface g0/0
+net 172.127.48.0
+net 221.255.16.0
+net 192.200.101.0
+default-information originate
+redistribute static

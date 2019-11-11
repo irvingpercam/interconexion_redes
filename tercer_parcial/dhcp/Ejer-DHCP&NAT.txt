@@ -1,0 +1,146 @@
+---- ISP ya configurado ----
+
+---- Router C ---> Router Frontera ----
+
+enable
+config t
+hostname RouterC
+int s0/0/0
+ip address 132.254.89.126 255.255.255.252
+no shut
+
+int s0/1/0
+ip address 172.16.0.241 255.255.255.252
+clock rate 128000
+no shut
+
+int s0/1/1
+ip address 172.16.0.245 255.255.255.252
+clock rate 128000
+no shut
+
+int f0/1
+ip address 172.16.0.238 255.255.255.240
+no shut
+
+ip dhcp pool PoolF01-RC
+network 172.16.0.224 255.255.255.240
+default-router 172.16.0.238
+
+! NAT estático para los servidores
+ip nat inside source static 172.16.0.193 132.254.89.123
+ip nat inside source static 172.16.0.194 132.254.89.122
+
+! NAT dinámico
+ip nat pool MyPool 132.254.89.96 132.254.89.121 netmask 255.255.255.224
+
+access-list 24 permit 172.16.0.0 0.0.0.63
+access-list 24 permit 172.16.0.64 0.0.0.63
+access-list 24 permit 172.16.0.128 0.0.0.63
+access-list 24 permit 172.16.0.224 0.0.0.15
+
+ip nat source list 24 pool MyPool
+
+
+! Asignación de rol de las interfaces en NAT
+int s0/0/0
+ip nat outside
+
+int s0/1/0
+ip nat inside
+
+int s0/1/1
+ip nat inside
+
+int f0/1
+ip nat inside
+
+
+ip route 0.0.0.0 0.0.0.0 s0/0/0
+
+router rip
+ver 2
+net 172.16.0.0
+passive-interface s0/0/0
+redist static
+
+
+---- Router A ----
+enable
+config t
+hostname RouterA
+
+int s0/0/0
+ip address 172.16.0.250 255.255.255.252
+no shut
+
+int f0/0
+ip address 172.16.0.190 255.255.255.192
+no shut
+
+! Instalacion de un DHCP
+
+ip dhcp pool PoolF00-RA
+network 172.16.0.128 255.255.255.192
+default-router 172.16.0.190
+
+router rip
+ver 2
+net 172.16.0.0
+
+
+---- Router B ----
+enable
+config t
+hostname RouterB
+
+int s0/0/0
+ip address 172.16.0.246 255.255.255.252
+no shut
+
+int s0/0/1
+ip address 172.16.0.249 255.255.255.252
+no shut
+
+int f0/0
+ip address 172.16.0.126 255.255.255.192
+no shut
+
+int f0/1
+ip address 172.16.0.62 255.255.255.192
+no shut
+
+ip dhcp pool PoolF00-RB
+network 172.16.0.64 255.255.255.192
+default-router 172.16.0.126
+
+ip dhcp pool PoolF01-RB
+network 172.16.0.0 255.255.255.192
+default-router 172.16.0.62
+
+router rip
+ver 2
+net 172.16.0.0
+
+---- Router D ----
+enable
+config t
+hostname RouterD
+
+int s0/0/0
+ip address 172.16.0.242 255.255.255.252
+no shut
+
+int f0/0
+ip address 172.16.0.222 255.255.255.224
+no shut
+
+router rip
+ver 2
+net 172.16.0.0
+
+int s0/0/0
+ip nat inside
+
+int f0/0
+ip nat inside

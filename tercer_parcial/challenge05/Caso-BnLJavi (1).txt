@@ -1,0 +1,286 @@
+----- Switch 1 -----
+ena
+config t
+no ip domain-lookup
+hostname s1
+enable secret class
+
+line con 0
+password cisco
+login
+loggin sync
+
+line vty 0 15
+password cisco
+login
+
+service password-enc
+
+!creacion de las vlan
+vlan 10
+name Administrativo
+vlan 20
+name Software
+vlan 30
+name Hardware
+vlan 40
+name Mecanica
+
+!ligar puertos con las vlan
+int range f0/2-10
+switchport mode access
+switchport access vlan 10
+int range f0/11-16
+switchport mode access
+switchport access vlan 20
+int range f0/17-24
+switchport mode access
+switchport access vlan 30
+
+!establecer los puertos trunk
+int g0/1
+desc conexion con el s2
+switchport mode trunk
+no shut
+
+!configuracion de la vlan 1
+int vlan 1
+ip address 132.210.251.11 255.255.255.240
+no shut
+
+ip default-gateway 132.210.251.14
+
+
+----- Switch 2 -----
+
+ena
+config t
+no ip domain-lookup
+hostname s2
+enable secret class
+
+line con 0
+password cisco
+login
+loggin sync
+
+line vty 0 15
+password cisco
+login
+
+service password-enc
+
+!creacion de las vlan
+vlan 10
+name Administrativo
+vlan 20
+name Software
+vlan 30
+name Hardware
+vlan 40
+name Mecanica
+
+!ligar puertos con las vlan
+int range f0/2-6
+switchport mode access
+switchport access vlan 10
+int range f0/7-12
+switchport mode access
+switchport access vlan 20
+int range f0/13-20
+switchport mode access
+switchport access vlan 30
+int range f0/21-24
+switchport mode access
+switchport access vlan 40
+
+!establecer los puertos trunk
+int g0/2
+desc conexion con el s1
+switchport mode trunk
+no shut
+int g0/1
+desc conexion con s3
+switchport mode trunk
+no shut
+
+!configuracion de la vlan 1
+int vlan 1
+ip address 132.210.251.12 255.255.255.240
+no shut
+
+ip default-gateway 132.210.251.14
+
+
+----- Switch 3 -----
+
+ena
+config t
+no ip domain-lookup
+hostname s3
+enable secret class
+
+line con 0
+password cisco
+login
+loggin sync
+
+line vty 0 15
+password cisco
+login
+
+service password-enc
+
+!creacion de las vlan
+vlan 10
+name Administrativo
+vlan 20
+name Software
+vlan 30
+name Hardware
+vlan 40
+name Mecanica
+
+!ligar puertos con las vlan
+int range f0/2-12
+switchport mode access
+switchport access vlan 10
+int range f0/13-24
+switchport mode access
+switchport access vlan 20
+
+!establecer los puertos trunk
+int g0/2
+desc conexion con el s2
+switchport mode trunk
+no shut
+int g0/1
+desc conexion con router bnl
+switchport mode trunk
+no shut
+
+!configuracion de la vlan 1
+int vlan 1
+ip address 132.210.251.13 255.255.255.240
+no shut
+
+ip default-gateway 132.210.251.14
+
+
+---- Router BnL-----
+
+ena
+config t
+hostname BnL
+no ip domain-lookup
+
+ena secret class
+
+line con 0
+password cisco
+login
+loggin sync
+
+line vty 0 4
+password cisco
+login
+
+int s0/0/0
+ip add 132.210.251.34  255.255.255.252
+no shut
+
+!protocolo de ruteo
+router ospf 2020
+network 132.210.250.0 0.0.0.63 area 0
+network 132.210.248.0 0.0.0.255 area 0
+network 132.210.249.0 0.0.0.127 area 0
+network 132.210.249.128 0.0.0.127 area 0
+network 132.210.251.32 0.0.0.3 area 0
+passive-int g0/0
+
+!declaracion de subinterfaces
+int g0/0.1
+encapsulation dot1Q 1
+ip add 132.210.251.14 255.255.255.240
+
+int g0/0.10
+encapsulation dot1Q 10
+ip add 132.210.250.62 255.255.255.192
+
+int g0/0.20
+encapsulation dot1Q 20
+ip add 132.210.248.254 255.255.255.0
+
+int g0/0.30
+encapsulation dot1Q 30
+ip add 132.210.249.126 255.255.255.128
+
+int g0/0.40
+encapsulation dot1Q 40
+ip add 132.210.249.254 255.255.255.128
+
+int g0/0
+no shut
+
+!establecer el protocolo DHCP
+! DHCP Exceptions
+!admin
+ip dhcp excluded-address 132.210.250.62
+!software
+ip dhcp excluded-address 132.210.248.254
+
+! DHCP Pools
+ip dhcp pool Administrativo
+network 132.210.250.0 255.255.255.192
+default-router 132.210.250.62
+
+ip dhcp pool Software
+net 132.210.248.0 255.255.255.0
+default-router 132.210.248.254
+
+
+
+---- Router Frontera -----
+
+ena
+config t
+
+hostname RFrontera
+no ip domain-lookup
+
+ena secret class
+
+line con 0
+password cisco
+login
+loggin sync
+
+line vty 0 4
+password cisco
+login
+
+int s0/0/0
+ip add 132.210.251.254  255.255.255.252
+no shut
+
+int s0/0/1
+ip add 132.210.251.33  255.255.255.252
+clock rate 128000
+no shut
+
+int g0/0
+ip add 132.210.251.126  255.255.255.192
+no shut
+
+ip route 0.0.0.0 0.0.0.0 s0/0/0
+
+router ospf 2020
+network 132.210.251.64 0.0.0.63 area 0
+network 132.210.251.32 0.0.0.3 area 0
+default-infor originate
+passive-int s0/0/0
+passive-int g0/0
+
+
+---- Router ISP -----
+- Ya  Configurado -
