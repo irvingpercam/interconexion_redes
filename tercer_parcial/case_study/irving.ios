@@ -14,13 +14,48 @@ logging sync
 line vty 0 4
 login
 logging sync
+exit
 
 int s0/0/1
 ip add 16.4.64.241 255.255.255.240
 ip nat outside
 no shut
 
+int s0/0/0
+ip add 10.0.4.178 255.255.255.252
+ip nat inside
+no shut
 
+int g0/1
+ip add 10.0.4.142 255.255.255.240
+ip nat inside
+no shut
+
+ip route 0.0.0.0 0.0.0.0 s0/0/1
+
+router rip
+ver 2
+net 10.0.4.128
+net 10.0.4.176
+redist static
+passive-int s0/0/1
+
+ip dhcp excluded-address 10.0.4.142
+
+ip dhcp pool R-FamFernandez
+net 10.0.4.128 255.255.255.240
+default-router 10.0.4.142
+
+! NAT Estatico
+ip nat inside source static 10.0.4.161 132.255.255.241
+
+! NAT Dinamico
+! Empieza a hacer traducciones a partir de la .242
+ip nat pool natPool 132.255.255.242 132.255.255.255 netmask 255.255.255.240
+! Permite todo lo que llegue al router que tenga la direccion 10.-.-.-
+access-list 10 permit 10.0.0.0 0.255.255.255
+! Activar access-list
+ip nat inside source list 10 pool natPool overload
 
 ! END ROUTER FAMILIA FERNANDEZ
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -40,8 +75,163 @@ logging sync
 line vty 0 4
 login
 logging sync
+
+int s0/1/0
+ip add 10.0.4.177 255.255.255.252
+ip nat inside
+no shut
+
+int g0/0
+ip add 10.0.4.166 255.255.255.248
+ip nat inside
+no shut
+
+int g0/1.10
+encapsulation dot1Q 10
+ip add 10.0.4.158 255.255.255.240
+ip nat inside
+
+int g0/1.20
+encapsulation dot1Q 20
+ip add 10.0.3.254 255.255.252.0
+ip nat inside
+
+int g0/1.30
+encapsulation dot1Q 30
+ip add 10.0.4.126 255.255.255.128
+ip nat inside
+
+int g0/1
+no shut
+
+router rip
+ver 2
+net 10.0.0.0
+net 10.0.4.0
+net 10.0.4.144
+net 10.0.4.160
+net 10.0.4.168
+net 10.0.4.176
+passive-int g0/0
+passive-int g0/1
+
+ip dhcp excluded-address 10.0.4.158
+ip dhcp excluded-address 10.0.3.254
+ip dhcp excluded-address 10.0.4.126
+
+ip dhcp pool Camerinos
+net 10.0.4.144 255.255.255.240
+default-router 10.0.4.158
+
+ip dhcp pool Invitados
+net 10.0.0.0 255.255.252.0
+default-router 10.0.3.254
+
+ip dhcp pool Prensa
+net 10.0.4.0 255.255.255.128
+default-router 10.0.4.126
+
+! Listas de control de acceso
+access-list 110 deny tcp any host 10.0.4.130 eq 80
+access-list 110 deny tcp any host 10.0.4.130 eq 20
+access-list 110 deny tcp any host 10.0.4.130 eq 21
+access-list 110 deny ip host 10.0.0.2 host 54.173.144.172
+access-list 110 permit ip any any
+int g0/1.10
+ip access-group 110 in
+int g0/1.20
+ip access-group 110 in
+int g0/1.30
+ip access-group 110 in
+
 ! END ROUTER SALON DE FIESTAS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! START SWITCH CENTRAL
+ena
+conf t
+no ip domain-lookup
+hostname SwitchCentral
+service password-enc
+ena secret class
 
+line con 0
+password cisco
+login
+logging sync
+line vty 0 15
+password cisco
+login
+logging sync
+exit
+
+!vlan DB
+vlan 10
+name Camerinos
+vlan 20
+name Invitados
+vlan 30
+name Prensa
+
+!vlan interfaces
+int f1/1
+switchport mode access
+switchport access vlan 10
+no shut
+
+int f2/1
+switchport mode access
+switchport access vlan 10
+no shut
+
+int f8/1
+switchport mode access
+switchport access vlan 20
+no shut
+
+int g0/1
+desc conexion con router salon
+switchport mode trunk
+no shut
+
+int f9/1
+desc conexion con switch salon
+switchport mode trunk
+no shut
 ! END SWITCH CENTRAL
+! START SWITCH SALON
+ena
+conf t
+no ip domain-lookup
+hostname SwitchSalon
+service password-enc
+ena secret class
+
+line con 0
+password cisco
+login
+logging sync
+line vty 0 15
+password cisco
+login
+logging sync
+exit
+
+!vlan DB
+vlan 10
+name Camerinos
+vlan 20
+name Invitados
+vlan 30
+name Prensa
+
+!vlan interfaces
+int f8/1
+switchport mode access
+switchport access vlan 30
+no shut
+
+int f9/1
+desc conexion con switch central
+switchport mode trunk
+no shut
+! END SWITCH SALON
