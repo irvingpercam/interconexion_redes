@@ -1,0 +1,47 @@
+! START ROUTER FAMILIA FERNANDEZ
+ena
+conf t
+hostname R-FamFernandez
+no ip domain-lookup
+service password-enc
+enable secret class
+
+line con 0
+password cisco
+login
+logging sync
+
+line vty 0 4
+login
+logging sync
+
+int s0/0/1
+ip add 16.4.64.241 255.255.255.240
+ip nat outside
+no shut
+
+
+
+! END ROUTER FAMILIA FERNANDEZ
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! START ROUTER SALON DE FIESTAS
+ena
+conf t
+hostname R-SalonFiestas
+no ip domain-lookup
+service password-enc
+enable secret class
+
+line con 0
+password cisco
+login
+logging sync
+
+line vty 0 4
+login
+logging sync
+! END ROUTER SALON DE FIESTAS
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! START SWITCH CENTRAL
+
+! END SWITCH CENTRAL

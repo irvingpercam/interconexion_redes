@@ -1,0 +1,233 @@
+**************************ROUTER FAMILIA
+ena
+conf t
+no ip domain-lookup
+hostname R-FamFernandez
+service password-enc
+ena secret class
+
+line con 0
+password cisco
+login
+logging sync
+line vty 0 4
+password cisco
+login
+logging sync
+exit
+
+int s0/0/1
+ip add 16.4.64.241 255.255.255.240
+ip nat outside
+no shut
+
+int s0/0/0
+ip add 10.0.4.89 255.255.255.252
+ip nat inside
+no shut
+
+int g0/1
+ip add 10.0.4.81 255.255.255.248
+ip nat inside
+no shut
+
+ip route 0.0.0.0 0.0.0.0 s0/0/1
+
+router rip
+ver 2
+net 10.0.4.80
+net 10.0.4.88
+redist static
+passive-int s0/0/1
+
+ip dhcp excluded-address 10.0.4.81
+
+ip dhcp pool Familia
+net 10.0.4.80 255.255.255.248
+default-router 10.0.4.81
+
+!nat estatico
+ip nat inside source static 10.0.4.94 132.255.255.241
+
+!nat dinamico
+ip nat pool natPool 132.255.255.242 132.255.255.255 netmask 255.255.255.240
+access-list 10 permit 10.0.0.0 0.255.255.255
+ip nat inside source list 10 pool natPool overload
+
+**************************ROUTER SALON
+ena
+conf t
+no ip domain-lookup
+hostname R-SalonFiestas
+service password-enc
+ena secret class
+
+line con 0
+password cisco
+login
+logging sync
+line vty 0 4
+password cisco
+login
+logging sync
+exit
+
+int s0/1/0
+ip add 10.0.4.90 255.255.255.252
+ip nat inside
+no shut
+
+int g0/0
+ip add 10.0.4.93 255.255.255.252
+ip nat inside
+no shut
+
+int g0/1.10
+encapsulation dot1Q 10
+ip add 10.0.4.65 255.255.255.240
+ip nat inside
+
+int g0/1.20
+encapsulation dot1Q 20
+ip add 10.0.0.1 255.255.252.0
+ip nat inside
+
+int g0/1.30
+encapsulation dot1Q 30
+ip add 10.0.4.1 255.255.255.192
+ip nat inside
+
+int g0/1
+no shut
+
+router rip
+ver 2
+net 10.0.0.0
+net 10.0.4.0
+net 10.0.4.64
+net 10.0.4.88
+net 10.0.0.92
+passive-int g0/0
+passive-int g0/1
+
+ip dhcp excluded-address 10.0.4.65
+ip dhcp excluded-address 10.0.4.1
+ip dhcp excluded-address 10.0.0.1
+
+ip dhcp pool Camerinos
+net 10.0.4.64 255.255.255.240
+default-router 10.0.4.65
+
+ip dhcp pool Invitados
+net 10.0.0.0 255.255.252.0
+default-router 10.0.0.1 
+
+ip dhcp pool Prensa
+net 10.0.4.0 255.255.255.192
+default-router 10.0.4.1
+
+!listas de control de acceso
+access-list 110 deny tcp any host 10.0.4.84 eq 80
+access-list 110 deny tcp any host 10.0.4.84 eq 20
+access-list 110 deny tcp any host 10.0.4.84 eq 21
+access-list 110 deny ip host 10.0.0.3 host 54.173.144.172
+access-list 110 permit ip any any
+int g0/1.10
+ip access-group 110 in
+int g0/1.20
+ip access-group 110 in
+int g0/1.30
+ip access-group 110 in
+
+
+**************************SWITCH CENTRAL
+ena
+conf t
+no ip domain-lookup
+hostname SwitchCentral
+service password-enc
+ena secret class
+
+line con 0
+password cisco
+login
+logging sync
+line vty 0 15
+password cisco
+login
+logging sync
+exit
+
+!vlan DB
+vlan 10
+name Camerinos
+vlan 20
+name Invitados
+vlan 30
+name Prensa
+
+!vlan interfaces
+int f1/1
+switchport mode access
+switchport access vlan 10
+no shut
+
+int f2/1
+switchport mode access
+switchport access vlan 10
+no shut
+
+int f8/1
+switchport mode access
+switchport access vlan 20
+no shut
+
+int g0/1
+desc conexion con router salon
+switchport mode trunk
+no shut
+
+int f9/1
+desc conexion con switch salon
+switchport mode trunk
+no shut
+
+**************************SWITCH SALON
+ena
+conf t
+no ip domain-lookup
+hostname SwitchSalon
+service password-enc
+ena secret class
+
+line con 0
+password cisco
+login
+logging sync
+line vty 0 15
+password cisco
+login
+logging sync
+exit
+
+!vlan DB
+vlan 10
+name Camerinos
+vlan 20
+name Invitados
+vlan 30
+name Prensa
+
+!vlan interfaces
+int f8/1
+switchport mode access
+switchport access vlan 30
+no shut
+
+int f9/1
+desc conexion con switch central
+switchport mode trunk
+no shut
+
+
+
